@@ -53,22 +53,22 @@ export interface fileWithRowIndex{
 async function scanFiles(dir: string,context: vscode.ExtensionContext):Promise<fileWithRowIndex[]> {
 	return new Promise((resolve,rejects)=>{
 		let foundFiles: fileWithRowIndex[] = [];
-
+		
+		console.log(dir, " ", isBanned(dir));
 		if (isBanned(dir)) {
-            rejects();
+			rejects();
 			return;
         }
-		console.log(dir, " ", isBanned(dir));
-	
-    fs.readdir(dir, (err, files) => {
-        if (err) {
-            vscode.window.showErrorMessage(`Errore nella lettura della cartella: ${err.message}`);
-            rejects();
-        }
-        
-        files.forEach(file => {
-            const filePath = path.join(dir, file);
-            fs.stat(filePath, (err, stats) => {
+		
+		fs.readdir(dir, (err, files) => {
+			if (err) {
+				vscode.window.showErrorMessage(`Errore nella lettura della cartella: ${err.message}`);
+				rejects();
+			}
+			
+			files.forEach(file => {
+				const filePath = path.join(dir, file);
+				fs.stat(filePath, (err, stats) => {
                 if (err || isNotSupported(filePath) || isBanned(filePath) ) {return;}
                 
                 if (stats.isDirectory()) {
@@ -87,7 +87,7 @@ async function scanFiles(dir: string,context: vscode.ExtensionContext):Promise<f
 								let text = `=> ${cleanPath} , a riga: ${rowNumber+1}`;
 								text = isBlasphemy(cleanPath)? text + " e migliorerei il nome del file" : text;
 								foundFiles.push({file:cleanPath,rowIndex:rowNumber+1,whatToSay:text} as fileWithRowIndex);
-								showResults(foundFiles,context)
+								showResults(foundFiles,context);
 							}
 						});
                     });
@@ -96,7 +96,7 @@ async function scanFiles(dir: string,context: vscode.ExtensionContext):Promise<f
         });
     });
 	return resolve(foundFiles);
-	})
+	});
 }
 
 function isBlasphemy(toCheck:string): boolean{
@@ -104,32 +104,35 @@ function isBlasphemy(toCheck:string): boolean{
 }
 
 function showResults(files: fileWithRowIndex[],context: vscode.ExtensionContext) {
-    panel.dispose();
-	panel= vscode.window.createWebviewPanel(
-		'fileScanner',
-		'Risultati della scansione',
-		vscode.ViewColumn.One,
-		{ enableScripts: true }
-	);
+    if (!panel) { // Creiamo il pannello solo se non esiste già
+        panel = vscode.window.createWebviewPanel(
+            'fileScanner',
+            'Risultati della scansione',
+            vscode.ViewColumn.One,
+            { enableScripts: true }
+        );
+    }
+
+    // Aggiorniamo il contenuto del WebView invece di creare un nuovo pannello
     panel.webview.html = getWebviewContent(files);
-	// Ascolta i messaggi dalla WebView
-    panel.webview.onDidReceiveMessage(
-        (message) => {
-            if (message.command === 'openFile') {
-                const fileUri = vscode.Uri.file(message.filePath);
-                const lineNumber = message.lineNumber;  // Ottieni il numero della riga
-                if (fs.existsSync(message.filePath)) {
+	panel.webview.onDidReceiveMessage(
+		(message) => {
+			console.log(message);
+			if (message.command === 'openFile') {
+				const fileUri = vscode.Uri.file(message.filePath);
+				const lineNumber = message.lineNumber;  // Ottieni il numero della riga
+				if (fs.existsSync(message.filePath)) {
 					vscode.window.showTextDocument(fileUri, {
 						selection: new vscode.Range(lineNumber - 1, 0, lineNumber - 1, 0)
 					});
 				} else {
 					vscode.window.showErrorMessage('File not found: ' + message.filePath);
 				}
-            }
-        },
-        undefined,
-        context.subscriptions
-    );
+			}
+		},
+		undefined,
+		context.subscriptions
+	);
 }
 
 

@@ -1,4 +1,4 @@
-const bannedDirs = ["node_modules",".git"];
+const bannedDirs = ["node_modules",".git",".env","__pycache__"];
 const notSupportedFiles = [".jpg",".png"];
 
 function isBanned(dir:string):boolean{
