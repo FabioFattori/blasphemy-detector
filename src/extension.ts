@@ -56,7 +56,9 @@ async function scanFiles(dir: string,context: vscode.ExtensionContext):Promise<f
 
 		if (isBanned(dir)) {
             rejects();
+			return;
         }
+		console.log(dir, " ", isBanned(dir));
 	
     fs.readdir(dir, (err, files) => {
         if (err) {
@@ -67,7 +69,7 @@ async function scanFiles(dir: string,context: vscode.ExtensionContext):Promise<f
         files.forEach(file => {
             const filePath = path.join(dir, file);
             fs.stat(filePath, (err, stats) => {
-                if (err || isNotSupported(filePath) ) {return;}
+                if (err || isNotSupported(filePath) || isBanned(filePath) ) {return;}
                 
                 if (stats.isDirectory()) {
                     ( scanFiles(filePath,context)).then((founds)=> founds.forEach(el => foundFiles.push(el)));
@@ -79,7 +81,6 @@ async function scanFiles(dir: string,context: vscode.ExtensionContext):Promise<f
 						}
 
 						let cleanPath = filePath.split((vscode.workspace.workspaceFolders![0]).uri.fsPath)[1].split("/").slice(1).join("/");
-						console.log(cleanPath)
 						let rows = data.split("\n");
 						rows.forEach((row,rowNumber) => {
 							if(isBlasphemy(row)){

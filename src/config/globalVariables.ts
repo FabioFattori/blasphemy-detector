@@ -1,16 +1,12 @@
-const bannedDirs = ["node_modules"];
-const notSupportedFiles = ["*.jpg","*.png"];
+const bannedDirs = ["node_modules",".git"];
+const notSupportedFiles = [".jpg",".png"];
 
 function isBanned(dir:string):boolean{
-    return bannedDirs.includes(dir);
+    return bannedDirs.some(notSupported => dir.includes(notSupported));
 }
 
 function isNotSupported(path:string):boolean{
-    notSupportedFiles.forEach(notSupported => {
-        if(path.includes(notSupported)){return true;}
-    });
-
-    return false;
+    return notSupportedFiles.some(notSupported => path.includes(notSupported));
 }
 
 export {
