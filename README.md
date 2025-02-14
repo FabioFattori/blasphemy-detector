@@ -1,4 +1,3 @@
-![logo](src/docDocuments/logo.jpg)
 # Blasphemy Detector
 
 This extension can be used to check the the code based for "Bad Words" (Heresy) in the code base.
